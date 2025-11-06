@@ -2,7 +2,9 @@ ARG POSTGRES_TAG=17-alpine
 FROM docker:27-cli
 
 # Install bash and coreutils
-RUN apk add --no-cache bash coreutils
+RUN apk add --no-cache bash coreutils curl
+
+
 
 # Create log directory
 RUN mkdir -p /restore-test-logs

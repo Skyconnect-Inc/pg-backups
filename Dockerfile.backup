@@ -6,7 +6,9 @@ RUN apk add --no-cache \
     aws-cli \
     openssh-client \
     rsync \
+    curl \
     bash
+
 
 # Create backup directory
 RUN mkdir -p /backups /var/log
