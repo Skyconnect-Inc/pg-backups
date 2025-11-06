@@ -701,20 +701,37 @@ pg-backups/
 
 ### Docker Images
 
-1. **Backup Image** - `ghcr.io/jackkweyunga/pg-backups:17-alpine`
-   - Automated scheduled backups
-   - Runs as a service with cron
+Three Docker images built via GitHub Actions using `POSTGRES_TAG` secret:
 
-2. **Restore Image** - `ghcr.io/jackkweyunga/pg-backups-restore:17-alpine`
-   - Interactive restore tool
-   - Run on-demand for recovery
+1. **Backup Image** - `ghcr.io/jackkweyunga/pg-backups:{POSTGRES_TAG}`
+   - Automated scheduled backups with cron
+   - Supports S3, remote sync, notifications
 
-3. **Restore Test Image** - `ghcr.io/jackkweyunga/pg-backups-restore-test:17-alpine`
-   - Automated restore testing
-   - Validates backups monthly
-   - Creates timestamped log files
+2. **Restore Image** - `ghcr.io/jackkweyunga/pg-backups-restore:{POSTGRES_TAG}`
+   - Interactive CLI for backup restoration
+   - Supports local, S3, remote sources
 
-All images built automatically via GitHub Actions.
+3. **Restore Test Image** - `ghcr.io/jackkweyunga/pg-backups-restore-test:{POSTGRES_TAG}`
+   - Monthly automated restore validation
+   - Creates test containers and verifies backups
+
+**GitHub Secret Configuration:**
+1. Go to GitHub repo Settings → Secrets and variables → Actions
+2. Add repository secret `POSTGRES_TAG` with a single PostgreSQL tag:
+   ```
+   17-alpine
+   ```
+   or
+   ```
+   18.0-latest
+   ```
+3. Workflow builds all image types (backup, restore, restore-test) for the specified PostgreSQL version
+
+**Manual Build:**
+```bash
+# Build with custom PostgreSQL version
+docker build --build-arg POSTGRES_TAG=18.0-latest -f Dockerfile.backup -t pg-backups:18 .
+```
 
 ---
 

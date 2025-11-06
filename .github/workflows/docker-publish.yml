@@ -18,32 +18,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  prepare-matrix:
-    runs-on: ubuntu-latest
-    outputs:
-      pg_tags: ${{ steps.set-matrix.outputs.pg_tags }}
-    steps:
-      - name: Set matrix from secret
-        id: set-matrix
-        run: |
-          # Get PostgreSQL tags from secret (comma-separated like "17-alpine,18.0-latest,19-alpine")
-          TAGS="${{ secrets.POSTGRES_TAGS }}"
-          
-          # Secret must be set
-          if [ -z "$TAGS" ]; then
-            echo "ERROR: POSTGRES_TAGS secret is not set!"
-            echo "Please set the POSTGRES_TAGS secret with comma-separated PostgreSQL tags (e.g., '17-alpine,18.0-latest,19-alpine')"
-            exit 1
-          fi
-          
-          # Convert comma-separated string to JSON array
-          JSON_ARRAY=$(echo "$TAGS" | jq -R 'split(",") | map(select(length > 0))')
-          
-          echo "pg_tags=$JSON_ARRAY" >> $GITHUB_OUTPUT
-          echo "PostgreSQL tags to build: $JSON_ARRAY"
-
   build-and-push:
-    needs: prepare-matrix
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -51,7 +26,6 @@ jobs:
 
     strategy:
       matrix:
-        pg_tag: ${{ fromJSON(needs.prepare-matrix.outputs.pg_tags) }}
         image_type:
           - 'backup'
           - 'restore'
@@ -60,6 +34,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Validate PostgreSQL tag
+        run: |
+          # Get PostgreSQL tag from secret (single value like "17-alpine" or "18.0-latest")
+          POSTGRES_TAG="${{ secrets.POSTGRES_TAG }}"
+          
+          # Secret must be set
+          if [ -z "$POSTGRES_TAG" ]; then
+            echo "ERROR: POSTGRES_TAG secret is not set!"
+            echo "Please set the POSTGRES_TAG secret with a single PostgreSQL tag (e.g., '17-alpine' or '18.0-latest')"
+            exit 1
+          fi
+          
+          echo "Building for PostgreSQL tag: $POSTGRES_TAG"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -89,7 +77,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ steps.image_name.outputs.suffix }}
           tags: |
-            type=raw,value=${{ matrix.pg_tag }}
+            type=raw,value=${{ secrets.POSTGRES_TAG }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -100,7 +88,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            POSTGRES_TAG=${{ matrix.pg_tag }}
-          cache-from: type=gha,scope=${{ matrix.image_type }}-${{ matrix.pg_tag }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image_type }}-${{ matrix.pg_tag }}
+            POSTGRES_TAG=${{ secrets.POSTGRES_TAG }}
+          cache-from: type=gha,scope=${{ matrix.image_type }}-${{ secrets.POSTGRES_TAG }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image_type }}-${{ secrets.POSTGRES_TAG }}
 
