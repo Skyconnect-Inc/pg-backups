@@ -320,11 +320,11 @@ RSYNC_RETENTION_DAYS=30
 
 ### Notifications (Rocket.Chat)
 ```bash
-COMS_ENABLED=true
-COM_BASE_URL=https://your-rocketchat-server.com
-COM_USER_ID=your_user_id
-COM_AUTH_TOKEN=your_auth_token
-COMS_ROOM_ID=your_room_id
+ROCKET_CHAT_ENABLED=true
+ROCKET_CHAT_BASE_URL=https://your-rocketchat-server.com
+ROCKET_CHAT_USER_ID=your_user_id
+ROCKET_CHAT_AUTH_TOKEN=your_auth_token
+ROCKET_CHAT_ROOM_ID=your_room_id
 ```
 
 ### Recommended Settings
